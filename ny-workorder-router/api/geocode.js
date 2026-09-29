@@ -1,4 +1,4 @@
-import { authorized, fail } from './_auth.js';
+import { fail } from './_auth.js';
 export const maxDuration = 120;
 
 // Census's public batch endpoint accepts up to 10,000 US addresses in a CSV.
@@ -22,7 +22,6 @@ function parseCsv(input) {
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return fail(res, 405, 'POST required');
-  if (!authorized(req)) return fail(res, 401, 'Dispatcher password is missing or incorrect');
   const jobs = req.body?.jobs;
   if (!Array.isArray(jobs) || !jobs.length || jobs.length > 500 || jobs.some(j => !Number.isInteger(j.page) || j.page < 1 || !j.street || !j.city || !/^\d{5}$/.test(j.zip) || j.state !== 'NY')) return fail(res, 400, 'Supply 1–500 NY addresses with five-digit ZIP codes');
   const csv = jobs.map(j => [j.page, j.street, j.city, j.state, j.zip].map(csvCell).join(',')).join('\r\n');

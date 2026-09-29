@@ -27,10 +27,10 @@ Vite's dev server does not execute the Vercel `/api` functions. Use `vercel dev`
 ## Vercel setup
 
 1. Import this repository as a new Vercel project. Framework preset **Vite**; build command `npm run build`; output directory `dist`.
-2. Configure `DISPATCH_PASSWORD` to a long random string. Keep it private; dispatchers enter it on the page, and the browser retains it only in memory. All API endpoints reject requests when this variable is missing.
+2. For the free prototype (PDF parsing, Census address matching, approximate routing, and packet downloads), no password or API key is required. For email or optional private road routing, configure `DISPATCH_PASSWORD` to a long random string. Keep it private; dispatchers enter it on the page, and the browser retains it only in memory. Email and road-routing endpoints reject requests when this variable is missing.
 3. For email, set `POWER_AUTOMATE_URL` to an HTTP trigger URL and `ALLOWED_EMAIL_DOMAIN` to the company domain, without `@`. An HTTP request trigger may require a Power Automate Premium license. Do not expose its trigger URL in client-side code.
 4. Optional: `OSRM_URL` for a private OSRM compatible `/table/v1/driving` service. The public OSRM demo is not intended as the production backend for hundreds of customer addresses. If unset, select **Free approximate distance**.
-5. Restrict Vercel project access to dispatchers through your company's approved identity controls. This app's shared secret protects API endpoints but is not a full user login or audit system.
+5. Restrict Vercel project access to dispatchers through your company's approved identity controls before using real customer addresses. The prototype address-matching endpoint is unauthenticated; a shared secret on email and road-routing endpoints is not a full user login or audit system.
 
 The browser uploads **only street, city, state, ZIP, and page number** to `/api/geocode`; that endpoint forwards those addresses to the U.S. Census service. Private routing sends coordinates to the configured OSRM endpoint. The email endpoint forwards each assigned PDF to Power Automate. Review whether these data flows are approved by your company before entering real customer information.
 
