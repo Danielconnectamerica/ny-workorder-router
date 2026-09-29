@@ -1,6 +1,6 @@
 import * as pdfjs from 'pdfjs-dist';
 import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
-import { PDFDocument } from 'pdf-lib';
+import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 
 pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
 
@@ -18,7 +18,7 @@ export function parseWorkOrder(text, page) {
   if (!id) errors.push('Missing work order number');
   if (!street || !city || !zip || !state) errors.push('Incomplete service address');
   if (state && state !== 'NY') errors.push('Outside NY');
-  return { page, id, street, street2, city, state, zip, appointment, originalRoute, errors, geo: null };
+  return { page, id, street, street2, city, state, zip, originalAddress: { street, street2, city, state, zip }, appointment, originalRoute, errors, geo: null };
 }
 
 function pageLines(items) {
@@ -68,6 +68,23 @@ export async function readPdf(file, progress = () => {}) {
 export async function packet(bytes, route) {
   const source = await PDFDocument.load(bytes);
   const output = await PDFDocument.create();
+  const cover = output.addPage([612, 792]);
+  const font = await output.embedFont(StandardFonts.Helvetica);
+  const bold = await output.embedFont(StandardFonts.HelveticaBold);
+  const ink = rgb(0.10, 0.16, 0.20);
+  const plain = s => String(s ?? '').replace(/[^\x20-\x7e]/g, '?');
+  cover.drawText('INSTALLER ROUTE SHEET', { x: 38, y: 744, size: 17, font: bold, color: ink });
+  cover.drawText(`${route.jobs.length} stops - follow this order`, { x: 38, y: 721, size: 11, font, color: ink });
+  cover.drawText('Addresses marked CORRECTED were edited by dispatch; original forms follow this sheet.', { x: 38, y: 700, size: 8.5, font, color: ink });
+  cover.drawText('ZIP ESTIMATE means approximate pilot placement; verify before traveling.', { x: 38, y: 686, size: 8.5, font, color: ink });
+  let y = 661;
+  for (const [index, job] of route.jobs.entries()) {
+    const changed = job.originalAddress && ['street', 'city', 'state', 'zip'].some(key => job[key] !== job.originalAddress[key]);
+    const flag = changed ? ' - CORRECTED' : job.geo?.match === 'Zip_Estimate' ? ' - ZIP ESTIMATE' : '';
+    cover.drawText(plain(`${index + 1}. WO ${job.id}${flag}`).slice(0, 90), { x: 38, y, size: 10, font: bold, color: ink });
+    cover.drawText(plain(`${job.street}${job.street2 ? ` ${job.street2}` : ''}, ${job.city}, ${job.state} ${job.zip}`).slice(0, 110), { x: 54, y: y - 14, size: 9, font, color: ink });
+    y -= 38;
+  }
   for (const job of route.jobs) {
     const [page] = await output.copyPages(source, [job.page - 1]);
     output.addPage(page);

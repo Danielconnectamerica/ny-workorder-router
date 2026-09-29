@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseWorkOrder, safeStreet, packet } from '../src/pdf.js';
-import { feasibleCounts, optimize, approximateMatrix } from '../src/routing.js';
+import { feasibleCounts, optimize, approximateMatrix, zipEstimate } from '../src/routing.js';
 
 describe('work order extraction', () => {
   it('reads labeled fields and rejects incomplete pages', () => {
@@ -12,6 +12,15 @@ describe('work order extraction', () => {
 });
 
 describe('route constraints and packet isolation', () => {
+  it('uses only exact same-ZIP anchors for a pilot location estimate', () => {
+    const jobs = [
+      { zip: '11206', geo: { match: 'Match', lat: 40.7, lon: -73.95 } },
+      { zip: '11206', geo: { match: 'No_Match', lat: 40.1, lon: -74.2 } },
+      { zip: '11207', geo: { match: 'Match', lat: 40.9, lon: -73.8 } }
+    ];
+    expect(zipEstimate(jobs, '11206')).toMatchObject({ match: 'Zip_Estimate', lat: 40.7, lon: -73.95 });
+    expect(zipEstimate(jobs, '11208')).toBeNull();
+  });
   it('enforces 14–16 and gives every page to one route', () => {
     expect(feasibleCounts(50, 3)).toBeNull();
     expect(feasibleCounts(30, 2)).toEqual([15, 15]);
@@ -27,6 +36,6 @@ describe('route constraints and packet isolation', () => {
     for (let i = 0; i < 3; i++) doc.addPage([612, 792]);
     const bytes = await doc.save();
     const assigned = await packet(bytes, { jobs: [{ page: 3 }, { page: 1 }] });
-    expect((await PDFDocument.load(assigned)).getPageCount()).toBe(2);
+    expect((await PDFDocument.load(assigned)).getPageCount()).toBe(3);
   });
 });

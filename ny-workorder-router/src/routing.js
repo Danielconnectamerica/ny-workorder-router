@@ -19,6 +19,17 @@ export function approximateMatrix(jobs) {
   return jobs.map(a => jobs.map(b => distanceSeconds(a.geo, b.geo)));
 }
 
+export function zipEstimate(jobs, zip) {
+  const anchors = jobs.filter(j => j.zip === zip && j.geo?.match === 'Match' && Number.isFinite(j.geo.lat) && Number.isFinite(j.geo.lon));
+  if (!anchors.length) return null;
+  return {
+    match: 'Zip_Estimate',
+    matchedAddress: `Approximate ${zip} area (from ${anchors.length} verified stop${anchors.length === 1 ? '' : 's'})`,
+    lat: anchors.reduce((sum, j) => sum + j.geo.lat, 0) / anchors.length,
+    lon: anchors.reduce((sum, j) => sum + j.geo.lon, 0) / anchors.length
+  };
+}
+
 function cost(route, matrix) {
   return route.slice(1).reduce((sum, id, i) => sum + matrix[route[i]][id], 0);
 }

@@ -5,11 +5,14 @@ A Vercel compatible dispatcher app for a **single bulk PDF with one work order p
 ## What works
 
 - Bulk PDF upload and editable WO number, street, city, state, ZIP fields; malformed and duplicate pages block routing.
+- Dispatchers can correct a field in the review table and recheck just that address without repeating the entire batch lookup.
 - Blank pages are skipped while original PDF page numbers are retained. The provided sample contains 10 work orders and a blank 11th page.
 - Address checks through the public Census batch geocoder. Unit/floor stays on the original page but is removed from the lookup address.
+- For a pilot only, an unmatched address may use the average coordinates of exact matches in the same ZIP. The original work order remains unchanged; the estimate is labeled and must be reviewed. Any route with a ZIP-area estimate cannot be emailed from the app.
 - Hard 14–16 job limits when feasible; a separate pilot override permits short sample routes. If, for example, 50 jobs cannot fit three or four strict routes, dispatch must change the batch or enable the pilot override.
 - Approximate distance clustering and stop ordering with an optional privately operated OSRM driving-time matrix. This is a heuristic, **not a global optimum**. Without OSRM, the displayed travel estimate is based on straight-line distance at 25 km/h, not actual road travel.
 - Per-installer packet PDFs, assembled from **only that route's original pages** in suggested stop order. The PDF is not uploaded to Vercel until a dispatcher deliberately emails the packet.
+- Every packet starts with a route sheet showing the reviewed addresses. Dispatcher edits are flagged **CORRECTED** there; original signed work-order pages are preserved behind it.
 - Per-installer email via Power Automate after dispatcher review. Failed or uncertain responses are not silently marked sent.
 
 ## Local setup
@@ -63,7 +66,7 @@ Each packet has a 3.5 MB base64 request cap to stay below Vercel's function payl
 - Appointment Date is displayed but not treated as a promised appointment window. Confirm its business meaning before enforcing time windows.
 - Routes are open paths: travel to the first stop, the last stop back home, service duration, traffic, shifts, and installer territories are not modeled. A route with 14–16 jobs may still be impossible in one workday.
 - The route review includes Google Maps direction links in chunks. Those links are for human review and may recalculate their own travel sequence or differ from the displayed estimate.
-- Only exact Census matched coordinates can be routed. Correct ambiguous or unmatched entries and run the check again.
+- Strict dispatch requires exact Census matches. For approximate pilot routing, unmatched entries can use same-ZIP estimates only after explicit selection. Correct or independently verify these locations before production dispatch.
 - Up to 500 PDF pages/addresses; the optional OSRM matrix endpoint supports up to 200 stops per run. For larger volume or strict appointment constraints, replace the heuristic with a production vehicle routing service.
 
 ## Privacy and deployment
