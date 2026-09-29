@@ -1,10 +1,10 @@
 # New York work order router
 
-A Vercel compatible dispatcher app for **one or more bulk PDFs with one work order per page**, using the form shown in the sample. Select all files for a batch together. It extracts labeled fields locally in the browser, checks addresses with the U.S. Census geocoder, groups and orders jobs, then makes one original-page PDF packet per installer. Each packet can be downloaded or sent to a configured Power Automate flow. There is no database or permanent PDF storage.
+A Vercel compatible dispatcher app for **one or more bulk PDFs with one work order per page**, using the form shown in the sample. Select files together or add them one at a time. It extracts labeled fields locally in the browser, checks addresses with the U.S. Census geocoder, groups and orders jobs, then makes one original-page PDF packet per installer. Each packet can be downloaded or sent to a configured Power Automate flow. There is no database or permanent PDF storage.
 
 ## What works
 
-- Multiple bulk PDF upload and editable WO number, street, city, state, ZIP fields; malformed and duplicate work-order numbers across files block routing. Selecting files again replaces the current unsent batch.
+- Multiple bulk PDF upload and editable WO number, street, city, state, ZIP fields; malformed and duplicate work-order numbers across files block routing. Further file selections append to the batch. Files can be removed individually; adding or removing resets address review and routes. Once any route has been emailed, start a new batch to select files again.
 - Dispatchers can correct a field in the review table and recheck just that address without repeating the entire batch lookup.
 - Blank pages are skipped while each order retains its source filename and original page number. The provided sample contains 10 work orders and a blank 11th page. Packets copy the original pages from the appropriate input PDF in the route's reviewed order.
 - Address checks through the public Census batch geocoder. Unit/floor stays on the original page but is removed from the lookup address.
